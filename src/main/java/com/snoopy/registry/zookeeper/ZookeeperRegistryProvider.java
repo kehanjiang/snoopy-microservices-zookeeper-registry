@@ -1,0 +1,34 @@
+package com.snoopy.registry.zookeeper;
+
+import com.snoopy.grpc.base.configure.GrpcRegistryProperties;
+import com.snoopy.grpc.base.registry.IRegistry;
+import com.snoopy.grpc.base.registry.IRegistryProvider;
+import com.snoopy.grpc.base.registry.zookeeper.ZookeeperRegistry;
+import org.I0Itec.zkclient.ZkClient;
+
+/**
+ * @author :   kehanjiang
+ * @date :   2021/12/1  15:44
+ */
+public class ZookeeperRegistryProvider implements IRegistryProvider {
+    public static final String REGISTRY_PROTOCOL_ZOOKEEPER = "zookeeper";
+    private static final int sessionTimeout = 60000;
+    private static final int connectionTimeout = 60000;
+
+    private GrpcRegistryProperties grpcRegistryProperties;
+
+    public ZookeeperRegistryProvider(GrpcRegistryProperties grpcRegistryProperties) {
+        this.grpcRegistryProperties = grpcRegistryProperties;
+    }
+
+    @Override
+    public IRegistry newRegistryInstance() {
+        ZkClient zkClient = new ZkClient(grpcRegistryProperties.getAddress(), sessionTimeout, connectionTimeout);
+        return new ZookeeperRegistry(zkClient, grpcRegistryProperties);
+    }
+
+    @Override
+    public String registryType() {
+        return REGISTRY_PROTOCOL_ZOOKEEPER;
+    }
+}

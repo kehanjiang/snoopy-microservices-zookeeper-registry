@@ -1,13 +1,12 @@
 ext {
-    snoopyVersion = "1.0.0-RC1"
+    snoopyGrpcBaseVersion = "1.0.0-RC1"
     zookeeperVersion = "3.4.10"
     zkClientVersion = "0.10"
-
     library = [
-            //snoopy-microservices
-            snoopy_base: "com.snoopy:snoopy-grpc-base:${snoopyVersion}",
-            //zookeeper
-            zookeeper  : "org.apache.zookeeper:zookeeper:${zookeeperVersion}",
-            zkclient   : "com.101tec:zkclient:${zkClientVersion}",
+            //snoopy-grpc-base
+            snoopy_grpc_base: "com.snoopy:snoopy-grpc-base:${snoopyGrpcBaseVersion}",
+            //zookeeper、zkclient
+            zookeeper       : "org.apache.zookeeper:zookeeper:${zookeeperVersion}",
+            zkclient        : "com.101tec:zkclient:${zkClientVersion}",
     ]
 }

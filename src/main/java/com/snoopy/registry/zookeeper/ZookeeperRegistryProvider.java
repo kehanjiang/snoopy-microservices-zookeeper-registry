@@ -14,14 +14,8 @@ public class ZookeeperRegistryProvider implements IRegistryProvider {
     private static final int sessionTimeout = 60000;
     private static final int connectionTimeout = 60000;
 
-    private GrpcRegistryProperties grpcRegistryProperties;
-
-    public ZookeeperRegistryProvider(GrpcRegistryProperties grpcRegistryProperties) {
-        this.grpcRegistryProperties = grpcRegistryProperties;
-    }
-
     @Override
-    public IRegistry newRegistryInstance() {
+    public IRegistry newRegistryInstance(GrpcRegistryProperties grpcRegistryProperties) {
         ZkClient zkClient = new ZkClient(grpcRegistryProperties.getAddress(), sessionTimeout, connectionTimeout);
         return new ZookeeperRegistry(zkClient, grpcRegistryProperties);
     }

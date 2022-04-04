@@ -3,7 +3,6 @@ package com.snoopy.registry.zookeeper;
 import com.snoopy.grpc.base.configure.GrpcRegistryProperties;
 import com.snoopy.grpc.base.registry.IRegistry;
 import com.snoopy.grpc.base.registry.IRegistryProvider;
-import com.snoopy.grpc.base.registry.zookeeper.ZookeeperRegistry;
 import org.I0Itec.zkclient.ZkClient;
 
 /**

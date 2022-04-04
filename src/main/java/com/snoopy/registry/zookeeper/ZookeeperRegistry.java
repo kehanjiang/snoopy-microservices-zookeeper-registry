@@ -6,7 +6,6 @@ import com.snoopy.grpc.base.constans.GrpcConstants;
 import com.snoopy.grpc.base.registry.IRegistry;
 import com.snoopy.grpc.base.registry.ISubscribeCallback;
 import com.snoopy.grpc.base.registry.RegistryServiceInfo;
-import com.snoopy.grpc.base.registry.zookeeper.ZookeeperNodeType;
 import com.snoopy.grpc.base.utils.LoggerBaseUtil;
 import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.ZkClient;

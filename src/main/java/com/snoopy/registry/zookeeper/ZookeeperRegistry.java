@@ -39,7 +39,7 @@ public class ZookeeperRegistry implements IRegistry {
         String nodeTypePath = GrpcConstants.BASE_PATH + GrpcConstants.PATH_SEPARATOR
                 + serviceInfo.getNamespace() + GrpcConstants.PATH_SEPARATOR + serviceInfo.getAlias()
                 + GrpcConstants.PATH_SEPARATOR + nodeType.getValue();
-        String nodePath = nodeTypePath + GrpcConstants.PATH_SEPARATOR + serviceInfo.getServerPortWeightStr();
+        String nodePath = nodeTypePath + GrpcConstants.PATH_SEPARATOR + serviceInfo.getHostAndPort();
 
         if (!zkClient.exists(nodeTypePath)) {
             zkClient.createPersistent(nodeTypePath, true);
@@ -47,37 +47,28 @@ public class ZookeeperRegistry implements IRegistry {
         if (zkClient.exists(nodePath)) {
             zkClient.delete(nodePath);
         }
-        zkClient.createEphemeral(nodePath, serviceInfo.getFullPath());
+        zkClient.createEphemeral(nodePath, serviceInfo.generateData());
     }
 
     private void removeNode(RegistryServiceInfo serviceInfo, ZookeeperNodeType nodeType) {
         String nodePath = GrpcConstants.BASE_PATH + GrpcConstants.PATH_SEPARATOR
                 + serviceInfo.getNamespace() + GrpcConstants.PATH_SEPARATOR + serviceInfo.getAlias()
                 + GrpcConstants.PATH_SEPARATOR + nodeType.getValue() + GrpcConstants.PATH_SEPARATOR
-                + serviceInfo.getServerPortWeightStr();
+                + serviceInfo.getHostAndPort();
 
         if (zkClient.exists(nodePath)) {
             zkClient.delete(nodePath);
         }
     }
 
-    private void notifyChange(RegistryServiceInfo serviceInfo, ISubscribeCallback subscribeCallback, List<String> currentChilds) {
+    private void notifyChange(String nodeTypePath, ISubscribeCallback subscribeCallback, List<String> currentChilds) {
         List<RegistryServiceInfo> serviceInfoList = (currentChilds != null && currentChilds.size() > 0) ?
                 currentChilds.stream().map(currentChild -> {
-                    String[] serverAndPort = currentChild.split(":");
-                    String server = serverAndPort[0];
-                    int port = Integer.parseInt(serverAndPort[1].split("\\[")[0]);
-                    int weight = Integer.parseInt(serverAndPort[1].split("\\[")[1].replace("]", ""));
-                    return new RegistryServiceInfo(serviceInfo.getNamespace(),
-                            serviceInfo.getAlias(),
-                            serviceInfo.getProtocol(),
-                            server,
-                            port,
-                            weight);
+                    String url = zkClient.readData(nodeTypePath + GrpcConstants.PATH_SEPARATOR + currentChild);
+                    return new RegistryServiceInfo(url);
                 }).collect(Collectors.toList()) : new ArrayList<>();
         subscribeCallback.handle(serviceInfoList);
     }
-
 
     @Override
     public void subscribe(RegistryServiceInfo serviceInfo, ISubscribeCallback subscribeCallback) {
@@ -88,11 +79,11 @@ public class ZookeeperRegistry implements IRegistry {
                     + ZookeeperNodeType.SERVER.getValue();
 
             List<String> currentChilds = zkClient.getChildren(nodeTypePath);
-            notifyChange(serviceInfo, subscribeCallback, currentChilds);
+            notifyChange(nodeTypePath, subscribeCallback, currentChilds);
             this.zkChildListener = new IZkChildListener() {
                 @Override
                 public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
-                    notifyChange(serviceInfo, subscribeCallback, currentChilds);
+                    notifyChange(nodeTypePath, subscribeCallback, currentChilds);
                 }
             };
             zkClient.subscribeChildChanges(nodeTypePath, this.zkChildListener);

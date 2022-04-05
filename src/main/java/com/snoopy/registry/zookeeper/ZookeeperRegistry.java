@@ -13,6 +13,7 @@ import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 /**
@@ -20,9 +21,8 @@ import java.util.stream.Collectors;
  * @date :   2021/12/1  15:18
  */
 public class ZookeeperRegistry implements IRegistry {
-
+    private final ReentrantLock reentrantLock = new ReentrantLock();
     private ZkClient zkClient;
-
     private IZkChildListener zkChildListener;
 
     public ZookeeperRegistry(ZkClient zkClient, GrpcRegistryProperties grpcRegistryProperties) {
@@ -36,7 +36,7 @@ public class ZookeeperRegistry implements IRegistry {
     }
 
     private void createNode(RegistryServiceInfo serviceInfo, ZookeeperNodeType nodeType) {
-        String nodeTypePath = serviceInfo.getPath()+ GrpcConstants.PATH_SEPARATOR + nodeType.getValue();
+        String nodeTypePath = serviceInfo.getPath() + GrpcConstants.PATH_SEPARATOR + nodeType.getValue();
         String nodePath = nodeTypePath + GrpcConstants.PATH_SEPARATOR + serviceInfo.getHostAndPort();
 
         if (!zkClient.exists(nodeTypePath)) {
@@ -49,8 +49,8 @@ public class ZookeeperRegistry implements IRegistry {
     }
 
     private void removeNode(RegistryServiceInfo serviceInfo, ZookeeperNodeType nodeType) {
-        String nodePath =  serviceInfo.getPath()+ GrpcConstants.PATH_SEPARATOR + nodeType.getValue()
-                + GrpcConstants.PATH_SEPARATOR+ serviceInfo.getHostAndPort();
+        String nodePath = serviceInfo.getPath() + GrpcConstants.PATH_SEPARATOR + nodeType.getValue()
+                + GrpcConstants.PATH_SEPARATOR + serviceInfo.getHostAndPort();
         if (zkClient.exists(nodePath)) {
             zkClient.delete(nodePath);
         }
@@ -68,8 +68,9 @@ public class ZookeeperRegistry implements IRegistry {
     @Override
     public void subscribe(RegistryServiceInfo serviceInfo, ISubscribeCallback subscribeCallback) {
         try {
+            reentrantLock.lock();
             createNode(serviceInfo, ZookeeperNodeType.CLIENT);
-            String nodeTypePath = serviceInfo.getPath()+ GrpcConstants.PATH_SEPARATOR
+            String nodeTypePath = serviceInfo.getPath() + GrpcConstants.PATH_SEPARATOR
                     + ZookeeperNodeType.SERVER.getValue();
 
             List<String> currentChilds = zkClient.getChildren(nodeTypePath);
@@ -83,36 +84,47 @@ public class ZookeeperRegistry implements IRegistry {
             zkClient.subscribeChildChanges(nodeTypePath, this.zkChildListener);
         } catch (Throwable e) {
             LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] subscribe failed !", e);
+        } finally {
+            reentrantLock.unlock();
         }
     }
 
     @Override
     public void unsubscribe(RegistryServiceInfo serviceInfo) {
         try {
+            reentrantLock.lock();
             removeNode(serviceInfo, ZookeeperNodeType.CLIENT);
-            String nodeTypePath = serviceInfo.getPath()+ GrpcConstants.PATH_SEPARATOR
+            String nodeTypePath = serviceInfo.getPath() + GrpcConstants.PATH_SEPARATOR
                     + ZookeeperNodeType.SERVER.getValue();
             zkClient.unsubscribeChildChanges(nodeTypePath, this.zkChildListener);
         } catch (Throwable e) {
             LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] unsubscribe failed !", e);
+        } finally {
+            reentrantLock.unlock();
         }
     }
 
     @Override
     public void register(RegistryServiceInfo serviceInfo) {
         try {
+            reentrantLock.lock();
             createNode(serviceInfo, ZookeeperNodeType.SERVER);
         } catch (Throwable e) {
             LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] register failed !", e);
+        } finally {
+            reentrantLock.unlock();
         }
     }
 
     @Override
     public void unregister(RegistryServiceInfo serviceInfo) {
         try {
+            reentrantLock.lock();
             removeNode(serviceInfo, ZookeeperNodeType.SERVER);
         } catch (Throwable e) {
             LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] register failed !", e);
+        } finally {
+            reentrantLock.unlock();
         }
     }
 

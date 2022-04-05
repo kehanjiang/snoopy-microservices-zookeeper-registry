@@ -6,7 +6,6 @@ import com.snoopy.grpc.base.constans.GrpcConstants;
 import com.snoopy.grpc.base.registry.IRegistry;
 import com.snoopy.grpc.base.registry.ISubscribeCallback;
 import com.snoopy.grpc.base.registry.RegistryServiceInfo;
-import com.snoopy.grpc.base.utils.LoggerBaseUtil;
 import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.springframework.util.StringUtils;
@@ -83,7 +82,7 @@ public class ZookeeperRegistry implements IRegistry {
             };
             zkClient.subscribeChildChanges(nodeTypePath, this.zkChildListener);
         } catch (Throwable e) {
-            LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] subscribe failed !", e);
+            throw new RuntimeException("[" + serviceInfo.getPath() + "] subscribe failed !", e);
         } finally {
             reentrantLock.unlock();
         }
@@ -98,7 +97,7 @@ public class ZookeeperRegistry implements IRegistry {
                     + ZookeeperNodeType.SERVER.getValue();
             zkClient.unsubscribeChildChanges(nodeTypePath, this.zkChildListener);
         } catch (Throwable e) {
-            LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] unsubscribe failed !", e);
+            throw new RuntimeException("[" + serviceInfo.getPath() + "] unsubscribe failed !", e);
         } finally {
             reentrantLock.unlock();
         }
@@ -110,7 +109,7 @@ public class ZookeeperRegistry implements IRegistry {
         try {
             createNode(serviceInfo, ZookeeperNodeType.SERVER);
         } catch (Throwable e) {
-            LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] register failed !", e);
+            throw new RuntimeException("[" + serviceInfo.getPath() + "] register failed !", e);
         } finally {
             reentrantLock.unlock();
         }
@@ -122,7 +121,7 @@ public class ZookeeperRegistry implements IRegistry {
         try {
             removeNode(serviceInfo, ZookeeperNodeType.SERVER);
         } catch (Throwable e) {
-            LoggerBaseUtil.error(this, "[" + serviceInfo.getPath() + "] register failed !", e);
+            throw new RuntimeException("[" + serviceInfo.getPath() + "] register failed !", e);
         } finally {
             reentrantLock.unlock();
         }

@@ -49,7 +49,7 @@ public class ZookeeperRegistry implements IRegistry {
     }
 
     private void removeNode(RegistryServiceInfo serviceInfo, ZookeeperNodeType nodeType) {
-        String nodePath =  serviceInfo.getPath()++ GrpcConstants.PATH_SEPARATOR + nodeType.getValue()
+        String nodePath =  serviceInfo.getPath()+ GrpcConstants.PATH_SEPARATOR + nodeType.getValue()
                 + GrpcConstants.PATH_SEPARATOR+ serviceInfo.getHostAndPort();
         if (zkClient.exists(nodePath)) {
             zkClient.delete(nodePath);

@@ -132,6 +132,8 @@ public class ZookeeperRegistry implements IRegistry {
 
     @Override
     public void close() throws IOException {
-        zkClient.close();
+        if (zkClient != null) {
+            zkClient.close();
+        }
     }
 }

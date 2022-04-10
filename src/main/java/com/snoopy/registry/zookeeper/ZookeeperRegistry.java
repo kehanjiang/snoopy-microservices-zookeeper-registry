@@ -6,10 +6,12 @@ import com.snoopy.grpc.base.constans.GrpcConstants;
 import com.snoopy.grpc.base.registry.IRegistry;
 import com.snoopy.grpc.base.registry.ISubscribeCallback;
 import com.snoopy.grpc.base.registry.RegistryServiceInfo;
+import com.snoopy.grpc.base.registry.ShutDownHookManager;
 import org.I0Itec.zkclient.IZkChildListener;
 import org.I0Itec.zkclient.ZkClient;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
@@ -32,6 +34,7 @@ public class ZookeeperRegistry implements IRegistry {
             String authInfo = name + ":" + pwd;
             this.zkClient.addAuthInfo("digest", authInfo.getBytes());
         }
+        ShutDownHookManager.registerShutdownHook(this);
     }
 
     private void createNode(RegistryServiceInfo serviceInfo, ZookeeperNodeType nodeType) {
@@ -127,4 +130,8 @@ public class ZookeeperRegistry implements IRegistry {
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        zkClient.close();
+    }
 }

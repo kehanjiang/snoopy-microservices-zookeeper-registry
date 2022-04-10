@@ -1,5 +1,5 @@
 ext {
-    snoopyGrpcBaseVersion = "1.0.0-RC3"
+    snoopyGrpcBaseVersion = "1.0.0-SNAPSHOT"
     zookeeperVersion = "3.4.10"
     zkClientVersion = "0.10"
     library = [

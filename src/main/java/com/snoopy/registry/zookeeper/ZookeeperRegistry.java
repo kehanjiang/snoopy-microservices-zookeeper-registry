@@ -71,6 +71,7 @@ public class ZookeeperRegistry implements IRegistry {
     public void subscribe(RegistryServiceInfo serviceInfo, ISubscribeCallback subscribeCallback) {
         reentrantLock.lock();
         try {
+            removeNode(serviceInfo, ZookeeperNodeType.CLIENT);
             createNode(serviceInfo, ZookeeperNodeType.CLIENT);
             String nodeTypePath = serviceInfo.getPath() + GrpcConstants.PATH_SEPARATOR
                     + ZookeeperNodeType.SERVER.getValue();
@@ -110,6 +111,7 @@ public class ZookeeperRegistry implements IRegistry {
     public void register(RegistryServiceInfo serviceInfo) {
         reentrantLock.lock();
         try {
+            removeNode(serviceInfo, ZookeeperNodeType.SERVER);
             createNode(serviceInfo, ZookeeperNodeType.SERVER);
         } catch (Throwable e) {
             throw new RuntimeException("[" + serviceInfo.getPath() + "] register failed !", e);

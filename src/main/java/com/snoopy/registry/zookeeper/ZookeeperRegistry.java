@@ -109,6 +109,7 @@ public class ZookeeperRegistry implements IRegistry {
             IZkChildListener zkChildListener = listenerMap.get(nodeTypePath);
             if (zkChildListener != null) {
                 zkClient.unsubscribeChildChanges(nodeTypePath, zkChildListener);
+                listenerMap.remove(nodeTypePath);
             }
         } catch (Throwable e) {
             throw new RuntimeException("[" + serviceInfo.getPath() + "] unsubscribe failed !", e);

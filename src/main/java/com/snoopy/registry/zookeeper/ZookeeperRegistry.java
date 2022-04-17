@@ -13,7 +13,9 @@ import org.springframework.util.StringUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -24,7 +26,7 @@ import java.util.stream.Collectors;
 public class ZookeeperRegistry implements IRegistry {
     private final ReentrantLock reentrantLock = new ReentrantLock();
     private ZkClient zkClient;
-    private IZkChildListener zkChildListener;
+    private Map<String, IZkChildListener> listenerMap = new HashMap<>();
 
     public ZookeeperRegistry(ZkClient zkClient, GrpcRegistryProperties grpcRegistryProperties) {
         this.zkClient = zkClient;
@@ -78,13 +80,18 @@ public class ZookeeperRegistry implements IRegistry {
 
             List<String> currentChilds = zkClient.getChildren(nodeTypePath);
             notifyChange(nodeTypePath, subscribeCallback, currentChilds);
-            this.zkChildListener = new IZkChildListener() {
-                @Override
-                public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
-                    notifyChange(nodeTypePath, subscribeCallback, currentChilds);
-                }
-            };
-            zkClient.subscribeChildChanges(nodeTypePath, this.zkChildListener);
+
+            IZkChildListener zkChildListener = listenerMap.get(nodeTypePath);
+            if (zkChildListener == null) {
+                zkChildListener = new IZkChildListener() {
+                    @Override
+                    public void handleChildChange(String parentPath, List<String> currentChilds) throws Exception {
+                        notifyChange(nodeTypePath, subscribeCallback, currentChilds);
+                    }
+                };
+                listenerMap.put(nodeTypePath, zkChildListener);
+            }
+            zkClient.subscribeChildChanges(nodeTypePath, zkChildListener);
         } catch (Throwable e) {
             throw new RuntimeException("[" + serviceInfo.getPath() + "] subscribe failed !", e);
         } finally {
@@ -99,7 +106,10 @@ public class ZookeeperRegistry implements IRegistry {
             removeNode(serviceInfo, ZookeeperNodeType.CLIENT);
             String nodeTypePath = serviceInfo.getPath() + GrpcConstants.PATH_SEPARATOR
                     + ZookeeperNodeType.SERVER.getValue();
-            zkClient.unsubscribeChildChanges(nodeTypePath, this.zkChildListener);
+            IZkChildListener zkChildListener = listenerMap.get(nodeTypePath);
+            if (zkChildListener != null) {
+                zkClient.unsubscribeChildChanges(nodeTypePath, zkChildListener);
+            }
         } catch (Throwable e) {
             throw new RuntimeException("[" + serviceInfo.getPath() + "] unsubscribe failed !", e);
         } finally {
@@ -134,6 +144,7 @@ public class ZookeeperRegistry implements IRegistry {
 
     @Override
     public void close() throws IOException {
+        listenerMap.clear();
         if (zkClient != null) {
             zkClient.close();
         }

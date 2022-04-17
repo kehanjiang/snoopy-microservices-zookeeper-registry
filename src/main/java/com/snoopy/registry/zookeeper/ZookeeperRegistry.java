@@ -121,7 +121,7 @@ public class ZookeeperRegistry implements IRegistry {
     public void register(RegistryServiceInfo serviceInfo) {
         reentrantLock.lock();
         try {
-            removeNode(serviceInfo, ZookeeperNodeType.SERVER);
+            unregister(serviceInfo);
             createNode(serviceInfo, ZookeeperNodeType.SERVER);
         } catch (Throwable e) {
             throw new RuntimeException("[" + serviceInfo.getPath() + "] register failed !", e);
